@@ -35,7 +35,7 @@
           <div class="col-md-6">
             <div class="mt-5">
               <h2 class="text-white text-center">Jackpot:</h2>
-              <p class="text-center"><span class="display-3" style="letter-spacing: 1rem">{{jackpot}}</span>Near</p>
+              <p class="text-center"><span class="display-3" style="letter-spacing: 0.5rem">{{jackpot}}</span>Near</p>
               <p class="text-center display-4 text-white">Recent Wins</p>
               <table class="table table-hover" style="border: solid 1px #dee2e6;background: #fff">
                 <thead>
@@ -70,7 +70,7 @@
                     <li class="number-item"><a :class="active5" @click="chooseNumber(5)">5</a></li>
                     <li class="number-item"><a :class="active6" @click="chooseNumber(6)">6</a></li>
                   </ul>
-                  <button id="roll_dice"  class="btn btn-warning btn-sm ml-2" :disabled="leftCount <= 0">
+                  <button id="roll_dice"  class="btn btn-warning btn-sm ml-2 mt-2">
                     Roll
                   </button>
                 </div>
@@ -103,9 +103,9 @@ export default {
       savedGreeting: "",
       newGreeting: "",
       leftCount: 0,
-      rollCount: "",
+      rollCount: 1,
       rollNumber: 1,
-      jackpot: 100,
+      jackpot: "--",
       winList: {},
       active1: "active",
       active2: "",
@@ -208,6 +208,10 @@ export default {
     },
 
     buyDice: async function () {
+      if(!this.isSignedIn){
+        alert('Please Sign In')
+        return
+      }
       // fired on form submit button used to update the greeting
 
       // disable the form while the value gets updated on-chain
@@ -229,6 +233,16 @@ export default {
     },
 
     rollDice: async function () {
+      if(!this.isSignedIn){
+        alert('Please Sign In')
+        return
+      }
+      
+      if (this.leftCount<=0){
+        alert('Sorry, you need to buy chances of dice rolls')
+        return
+      }
+
       this.isLoading = true;
       // disable the form while the value gets updated on-chain
       this.$refs.fieldset.disabled = true;
