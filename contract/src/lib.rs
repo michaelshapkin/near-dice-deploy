@@ -1,7 +1,7 @@
 /*
  * This is NearDice contract:
- * 
- * 
+ *
+ *
  *
  */
 
@@ -119,7 +119,7 @@ impl NearDice {
             env::is_valid_account_id(owner_id.as_bytes()),
             "The owner account ID is invalid"
         );
-        
+
         Self {
             owner_id,
             dice_number,
@@ -143,7 +143,7 @@ impl NearDice {
             "Can only be called by the owner"
         );
     }
-    /// 
+    ///
     pub fn withdraw_ownerpod(&mut self, amount: U128) {
         self.assert_owner();
         let amount: Balance = amount.into();
@@ -201,7 +201,7 @@ impl NearDice {
             amount >= self.rolling_fee,
             format!("You must deposit more than {}", self.rolling_fee)
         );
-    
+
         let buy_dice_count = amount / self.rolling_fee;
         let leftover = amount - buy_dice_count * self.rolling_fee;
 
@@ -259,7 +259,7 @@ impl NearDice {
             height: env::block_index().into(),
             ts: env::block_timestamp().into(),
         };
-        
+
         // let's see how lucky caller is this time
         if target == dice_point as u8 {  // Wow, he wins
             // figure out gross reward and update jack pod
@@ -269,7 +269,7 @@ impl NearDice {
             let owners_fee = self.reward_fee_fraction.multiply(gross_reward);
             result.reward_amount = (gross_reward - owners_fee).into();
             result.jackpod_left = self.jack_pod.into();
-            // update owner pod 
+            // update owner pod
             self.owner_pod += owners_fee;
             // records this winning
             self.win_history.push(&WinnerInfo {
@@ -279,14 +279,8 @@ impl NearDice {
                 ts: env::block_timestamp(),
             });
         }
-        
-        result
-    }
 
-    pub fn set_greeting(&mut self, message: String) {
-        let account_id = env::signer_account_id();
-        // Use env::log to record logs permanently to the blockchain!
-        env::log(format!("Saving greeting '{}' for account '{}'", message, account_id,).as_bytes());
+        result
     }
 
     //***********************/
@@ -331,10 +325,6 @@ impl NearDice {
         let balance = self.accounts.get(&account_id.into()).unwrap_or(0);
         (balance / self.rolling_fee) as u8
     }
-
-    pub fn get_greeting(&self, account_id: String) -> &str {
-        "Hello, this method has obsolete"
-    }
 }
 
 /*
@@ -348,55 +338,154 @@ impl NearDice {
  * yarn test
  *
  */
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use near_sdk::MockedBlockchain;
-    use near_sdk::{testing_env, VMContext};
+    use near_sdk::{testing_env, MockedBlockchain};
 
-    // mock the context for testing, notice "signer_account_id" that was accessed above from env::
-    fn get_context(input: Vec<u8>, is_view: bool) -> VMContext {
-        VMContext {
-            current_account_id: "alice_near".to_string(),
-            signer_account_id: "bob_near".to_string(),
-            signer_account_pk: vec![0, 1, 2],
-            predecessor_account_id: "carol_near".to_string(),
-            input,
-            block_index: 0,
-            block_timestamp: 0,
-            account_balance: 0,
-            account_locked_balance: 0,
-            storage_usage: 0,
-            attached_deposit: 0,
-            prepaid_gas: 10u64.pow(18),
-            random_seed: vec![0, 1, 2],
-            is_view,
-            output_data_receivers: vec![],
-            epoch_height: 19,
-        }
+    mod test_utils;
+    use test_utils::*;
+
+    fn account_casino() -> String {
+        "casino".to_string()
+    }
+
+    fn accunt_bob() -> String {
+        "bob".to_string()
+    }
+
+    const ROLLING_FEE: u128 = 1_000_000_000_000_000_000_000_000;
+
+    fn start_casino() -> NearDice {
+        // initialize contract and deposit jackpod with 100 NEAR
+        let context = VMContextBuilder::new()
+            .current_account_id(account_casino())
+            .predecessor_account_id(account_casino())
+            .signer_account_id(account_casino())
+            .attached_deposit(ROLLING_FEE * 100)
+            .finish();
+        testing_env!(context.clone());
+        let mut contract = NearDice::new(account_casino(), 1_u8, U128(ROLLING_FEE), RewardFeeFraction {
+            numerator: 1,
+            denominator: 20
+        });
+        contract.deposit_jackpod();
+
+        contract
     }
 
     #[test]
-    fn set_then_get_greeting() {
-        let context = get_context(vec![], false);
-        testing_env!(context);
-        let mut contract = NearDice::default();
-        contract.set_greeting("howdy".to_string());
-        assert_eq!(
-            "howdy".to_string(),
-            contract.get_greeting("bob_near".to_string())
-        );
+    fn test_buy_dice() {
+        let mut contract = start_casino();
+        let info = contract.get_contract_info();
+        assert_eq!(info.jack_pod, U128(ROLLING_FEE * 100));
+
+        // buy 10 NEAR for rolling dices
+        let context = VMContextBuilder::new()
+            .predecessor_account_id(accunt_bob())
+            .signer_account_id(accunt_bob())
+            .attached_deposit(ROLLING_FEE * 10)
+            .finish();
+        testing_env!(context.clone());
+        contract.buy_dice();
+        assert_eq!(contract.get_account_dice_count(accunt_bob()), 10);
+
+        // buy 25 more NEAR for rolling dices
+        let context = VMContextBuilder::new()
+            .predecessor_account_id(accunt_bob())
+            .signer_account_id(accunt_bob())
+            .attached_deposit(ROLLING_FEE * 25)
+            .finish();
+        testing_env!(context.clone());
+        contract.buy_dice();
+        assert_eq!(contract.get_account_dice_count(accunt_bob()), 35);
     }
 
     #[test]
-    fn get_default_greeting() {
-        let context = get_context(vec![], true);
-        testing_env!(context);
-        let contract = NearDice::default();
-        // this test did not call set_greeting so should return the default "Hello" greeting
-        assert_eq!(
-            "Hello".to_string(),
-            contract.get_greeting("francis.near".to_string())
-        );
+    #[should_panic(expected = "You must at least have one dice to play")]
+    fn test_roll_dice_before_buy_dice() {
+        let mut contract = start_casino();
+        let info = contract.get_contract_info();
+        assert_eq!(info.jack_pod, U128(ROLLING_FEE * 100));
+
+        // roll dice 6 without buying dice
+        let context = VMContextBuilder::new()
+            .predecessor_account_id(accunt_bob())
+            .signer_account_id(accunt_bob())
+            .finish();
+        testing_env!(context.clone());
+        contract.roll_dice(6);
+    }
+
+
+    #[test]
+    #[should_panic(expected = "You must at least have one dice to play")]
+    fn test_roll_dice_but_exceeds_limit() {
+        let mut contract = start_casino();
+        let info = contract.get_contract_info();
+        assert_eq!(info.jack_pod, U128(ROLLING_FEE * 100));
+
+        // buy 2 NEAR for rolling dices
+        let context = VMContextBuilder::new()
+            .predecessor_account_id(accunt_bob())
+            .signer_account_id(accunt_bob())
+            .attached_deposit(ROLLING_FEE * 2)
+            .finish();
+        testing_env!(context.clone());
+        contract.buy_dice();
+        assert_eq!(contract.get_account_dice_count(accunt_bob()), 2);
+
+        let context = VMContextBuilder::new()
+            .predecessor_account_id(accunt_bob())
+            .signer_account_id(accunt_bob())
+            .finish();
+        testing_env!(context.clone());
+        // roll dice 1
+        contract.roll_dice(1);
+        assert_eq!(contract.get_account_dice_count(accunt_bob()), 1);
+        // roll dice 2
+        contract.roll_dice(2);
+        assert_eq!(contract.get_account_dice_count(accunt_bob()), 0);
+        // roll dice 3
+        contract.roll_dice(3);
+    }
+
+    #[test]
+    fn test_roll_dice_successfully() {
+        let mut contract = start_casino();
+        let info = contract.get_contract_info();
+        assert_eq!(info.jack_pod, U128(ROLLING_FEE * 100));
+
+        // buy 5 NEAR for rolling dices
+        let context = VMContextBuilder::new()
+            .predecessor_account_id(accunt_bob())
+            .signer_account_id(accunt_bob())
+            .attached_deposit(ROLLING_FEE * 5)
+            .finish();
+        testing_env!(context.clone());
+        contract.buy_dice();
+        assert_eq!(contract.get_account_dice_count(accunt_bob()), 5);
+
+        let context = VMContextBuilder::new()
+            .predecessor_account_id(accunt_bob())
+            .signer_account_id(accunt_bob())
+            .finish();
+        testing_env!(context.clone());
+        // roll dice 6
+        contract.roll_dice(6);
+        assert_eq!(contract.get_account_dice_count(accunt_bob()), 4);
+        // roll dice 5
+        contract.roll_dice(5);
+        assert_eq!(contract.get_account_dice_count(accunt_bob()), 3);
+        // roll dice 4
+        contract.roll_dice(4);
+        assert_eq!(contract.get_account_dice_count(accunt_bob()), 2);
+        // roll dice 3
+        contract.roll_dice(3);
+        assert_eq!(contract.get_account_dice_count(accunt_bob()), 1);
+        // roll dice 2
+        contract.roll_dice(2);
+        assert_eq!(contract.get_account_dice_count(accunt_bob()), 0);
     }
 }

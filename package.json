@@ -15,7 +15,8 @@
     "start": "echo The app is starting! It will automatically open in your browser when ready && npm run serve",
     "dev": "nodemon --watch contract/src -e rs --exec \"npm run start\"",
     "test:web": "vue-cli-service test:unit",
-    "test": "npm run build:contract:debug && cd contract && cargo test -- --nocapture && cd .. && vue-cli-service test:unit",
+    "test:contract": "npm run build:contract:debug && cd contract && cargo test -- --nocapture && cd ..",
+    "test": "npm run test:contract && npm run test:web",
     "serve": "node copy-dev-account.js && vue-cli-service serve --open",
     "lint": "eslint . --ext .js --ext .vue --fix"
   },
