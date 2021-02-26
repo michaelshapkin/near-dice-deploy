@@ -17,13 +17,13 @@
                   <span class="text-white">Buy </span>
                   <select name="rollCount" v-model="rollCount" id="roll" class="ml-2 mr-2">
                     <option value="1" selected="selected">1</option>
-                    <option value="1">5</option>
-                    <option value="1">10</option>
-                    <option value="1">30</option>
-                    <option value="1">50</option>
-                    <option value="1">100</option>
-                    <option value="1">1000</option>
-                  </select> 
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="30">30</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="1000">1000</option>
+                  </select>
                   <span class="text-white"> times</span>
                   <button id="buy_dice" class="btn btn-danger btn-sm ml-2">
                     Buy
@@ -70,9 +70,9 @@
                     <li class="number-item"><a :class="active5" @click="chooseNumber(5)">5</a></li>
                     <li class="number-item"><a :class="active6" @click="chooseNumber(6)">6</a></li>
                   </ul>
-                  <button id="roll_dice"  class="btn btn-warning btn-sm ml-2">
+                  <button id="roll_dice"  class="btn btn-warning btn-sm ml-2" :disabled="leftCount <= 0">
                     Roll
-                  </button>            
+                  </button>
                 </div>
               </fieldset>
             </form>
@@ -104,10 +104,10 @@ export default {
       newGreeting: "",
       leftCount: 0,
       rollCount: "",
-      rollNumber: "",
+      rollNumber: 1,
       jackpot: 100,
       winList: {},
-      active1: "",
+      active1: "active",
       active2: "",
       active3: "",
       active4: "",
@@ -121,6 +121,7 @@ export default {
   created() {
     this.getLeftCount()
     this.getWinHistory()
+    this.getContactInfo()
   },
 
   computed: {
@@ -240,6 +241,7 @@ export default {
           })
           .then((res) => {
             this.isLoading = false;
+            this.getWinHistory();
             if (res.dice_point === res.user_guess) {
               const reward_amount = res.reward_amount.toString();
               const temp_amount = reward_amount.substr(
@@ -280,6 +282,20 @@ export default {
           })
           .then((res) => {
             this.winList = res;
+            console.log(res);
+          });
+      } catch (e) {
+        console.log(e); //re-throw
+      }
+    },
+
+    getContactInfo: async function () {
+      try {
+        // make an update call to the smart contract
+        await window.contract
+          .get_contract_info({})
+          .then((res) => {
+            this.jackpot = this.formatAmount(res.jack_pod);
             console.log(res);
           });
       } catch (e) {

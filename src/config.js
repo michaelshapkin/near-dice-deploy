@@ -1,18 +1,18 @@
-const CONTRACT_NAME = process.env.VUE_APP_CONTRACT_NAME ||'NCD-GroupA-Demo'
+const CONTRACT_NAME = process.env.VUE_APP_CONTRACT_NAME || 'dev-1614240595058-5266655' // 'NCD-GroupA-Demo'
 
 function getConfig(env) {
   switch (env) {
 
     case 'production':
     case 'mainnet':
-      return {
-        networkId: 'mainnet',
-        nodeUrl: 'https://rpc.mainnet.near.org',
-        contractName: CONTRACT_NAME,
-        walletUrl: 'https://wallet.near.org',
-        helperUrl: 'https://helper.mainnet.near.org',
-        explorerUrl: 'https://explorer.mainnet.near.org',
-      }
+      // return {
+      //   networkId: 'mainnet',
+      //   nodeUrl: 'https://rpc.mainnet.near.org',
+      //   contractName: CONTRACT_NAME,
+      //   walletUrl: 'https://wallet.near.org',
+      //   helperUrl: 'https://helper.mainnet.near.org',
+      //   explorerUrl: 'https://explorer.mainnet.near.org',
+      // }
     case 'development':
     case 'testnet':
       return {
