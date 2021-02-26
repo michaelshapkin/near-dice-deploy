@@ -23,7 +23,7 @@
                     <option value="50">50</option>
                     <option value="100">100</option>
                     <option value="1000">1000</option>
-                  </select> 
+                  </select>
                   <span class="text-white"> times</span>
                   <button id="buy_dice" class="btn btn-danger btn-sm ml-2">
                     Buy
@@ -70,9 +70,9 @@
                     <li class="number-item"><a :class="active5" @click="chooseNumber(5)">5</a></li>
                     <li class="number-item"><a :class="active6" @click="chooseNumber(6)">6</a></li>
                   </ul>
-                  <button id="roll_dice"  class="btn btn-warning btn-sm ml-2">
+                  <button id="roll_dice"  class="btn btn-warning btn-sm ml-2" :disabled="leftCount <= 0">
                     Roll
-                  </button>            
+                  </button>
                 </div>
               </fieldset>
             </form>
