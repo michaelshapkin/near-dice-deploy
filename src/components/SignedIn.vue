@@ -5,7 +5,7 @@
     </div>
     <main>
       <h1 class="shadow py-2" v-show="isSignedIn">
-        Welcome {{ accountId }}, You have {{ this.leftCount }} times to dice
+        Welcome {{ accountId }}, You have {{ this.leftCount }} dice(s) 
       </h1>
 
       <div class="contianer">
