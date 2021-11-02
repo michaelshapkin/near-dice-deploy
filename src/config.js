@@ -1,4 +1,4 @@
-const CONTRACT_NAME = process.env.VUE_APP_CONTRACT_NAME || 'dev-1614240595058-5266655' // 'NCD-GroupA-Demo'
+const CONTRACT_NAME = process.env.VUE_APP_CONTRACT_NAME || 'dice1.michaelshapkin.testnet' // 'NCD-GroupA-Demo'
 
 function getConfig(env) {
   switch (env) {
